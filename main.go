@@ -11,10 +11,10 @@ import (
 var bgImg *ebiten.Image
 var blackImg *ebiten.Image
 
-var ROWS = 20
-var COLUMNS = 20
+var ROWS int = 50
+var COLUMNS int = 50
 
-const SQUARE_SIZE = 32
+const SQUARE_SIZE int = 32
 
 var playing bool
 
@@ -80,7 +80,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func main() {
-	ebiten.SetWindowSize(640, 480)
+	ebiten.SetWindowSize(1280, 720)
 	ebiten.SetWindowTitle("Hello, World!")
 	if err := ebiten.RunGame(&Game{}); err != nil {
 		log.Fatal(err)
@@ -107,5 +107,63 @@ func playingPhase() bool {
 	if ebiten.IsKeyPressed(ebiten.KeySpace) {
 		return false
 	}
+	board = updateBoard(board)
 	return true
+}
+
+func liveNeighbors(board [][]bool, row int, column int) int {
+	count := 0
+	// first row
+	if row > 0 {
+		if column > 0 && board[row-1][column-1] {
+			count++
+		}
+		if board[row-1][column] {
+			count++
+		}
+		if column < COLUMNS-1 && board[row-1][column+1] {
+			count++
+		}
+	}
+	// second row
+	if column > 0 && board[row][column-1] {
+		count++
+	}
+	if column < COLUMNS-1 && board[row][column+1] {
+		count++
+	}
+	//third row
+	if row < ROWS-1 {
+		if column > 0 && board[row+1][column-1] {
+			count++
+		}
+		if board[row+1][column] {
+			count++
+		}
+		if column < COLUMNS-1 && board[row+1][column+1] {
+			count++
+		}
+	}
+	return count
+}
+
+func updateBoard(board [][]bool) [][]bool {
+	newboard := make([][]bool, ROWS)
+	for i := range newboard {
+		newboard[i] = make([]bool, COLUMNS)
+	}
+	for row := range board {
+		for column := range board[row] {
+			nb := liveNeighbors(board, row, column)
+			if board[row][column] && (nb == 2 || nb == 3) {
+				// remain alive
+				newboard[row][column] = true
+			}
+			if !board[row][column] && nb == 3 {
+				newboard[row][column] = true
+			}
+		}
+	}
+
+	return newboard
 }
